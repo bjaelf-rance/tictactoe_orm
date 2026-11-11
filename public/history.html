@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tic-Tac-Toe - History</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html">New Game</a>
+    <a href="history.html" class="active">Game History</a>
+  </nav>
+
+  <main>
+    <h1>Game History</h1>
+    <ul id="history"></ul>
+  </main>
+
+  <script src="common.js"></script>
+  <script>
+    const historyEl = document.getElementById("history");
+
+    async function loadHistory() {
+      const games = await request(API);
+      historyEl.innerHTML = "";
+
+      if (games.length === 0) {
+        const li = document.createElement("li");
+        li.className = "empty";
+        li.innerHTML = 'No games yet. <a href="index.html">Start one!</a>';
+        historyEl.appendChild(li);
+        return;
+      }
+
+      games.forEach(g => {
+        const li = document.createElement("li");
+        li.className = "history-item";
+
+        const mini = document.createElement("div");
+        mini.className = "mini";
+        mini.append(avatarEl(g.avatarX, "X"), avatarEl(g.avatarO, "O"));
+
+        const title = document.createElement("div");
+        title.className = "history-title";
+        title.textContent = `#${g.id} ${g.playerX} vs ${g.playerO}`;
+
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        if (!g.winner) {
+          badge.textContent = "In progress";
+          badge.classList.add("progress");
+        } else if (g.winner === "Draw") {
+          badge.textContent = "Draw";
+          badge.classList.add("draw");
+        } else {
+          badge.textContent = `${nameOf(g, g.winner)} won`;
+          badge.classList.add("won");
+        }
+
+        const date = document.createElement("div");
+        date.className = "history-date";
+        date.textContent = new Date(g.createdAt).toLocaleString();
+
+        const info = document.createElement("div");
+        info.className = "history-info";
+        info.append(title, badge, date);
+
+        const head = document.createElement("div");
+        head.className = "history-head";
+        head.append(mini, info);
+
+        const openBtn = document.createElement("a");
+        openBtn.className = "btn small";
+        openBtn.textContent = g.winner ? "View" : "Continue";
+        openBtn.href = `game.html?id=${g.id}`;
+
+        const renameBtn = document.createElement("button");
+        renameBtn.className = "btn small ghost";
+        renameBtn.textContent = "Rename";
+        renameBtn.onclick = () => renameGame(g);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "btn small danger";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.onclick = () => deleteGame(g);
+
+        const actions = document.createElement("div");
+        actions.className = "history-actions";
+        actions.append(openBtn, renameBtn, deleteBtn);
+
+        li.append(head, actions);
+        historyEl.appendChild(li);
+      });
+    }
+
+    async function renameGame(g) {
+      const playerX = prompt("Player X name:", g.playerX);
+      if (playerX === null) return;
+      const playerO = prompt("Player O name:", g.playerO);
+      if (playerO === null) return;
+      try {
+        await request(`${API}/${g.id}`, {
+          method: "PUT",
+          body: JSON.stringify({ playerX, playerO })
+        });
+        loadHistory();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function deleteGame(g) {
+      if (!confirm(`Delete game #${g.id}?`)) return;
+      try {
+        await request(`${API}/${g.id}`, { method: "DELETE" });
+        loadHistory();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    loadHistory();
+  </script>
+</body>
+</html>

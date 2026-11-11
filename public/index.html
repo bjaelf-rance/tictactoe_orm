@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tic-Tac-Toe - New Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="active">New Game</a>
+    <a href="history.html">Game History</a>
+  </nav>
+
+  <main>
+    <h1>New Game</h1>
+    <form id="newGameForm" class="card">
+      <div class="players">
+        <div class="player-setup">
+          <h2>Player X</h2>
+          <input id="playerX" placeholder="Name" required maxlength="50">
+          <div id="pickerX" class="picker"></div>
+        </div>
+        <div class="player-setup">
+          <h2>Player O</h2>
+          <input id="playerO" placeholder="Name" required maxlength="50">
+          <div id="pickerO" class="picker"></div>
+        </div>
+      </div>
+      <button type="submit" class="btn big">Start Game</button>
+    </form>
+  </main>
+
+  <script src="common.js"></script>
+  <script>
+    const selected = { X: AVATARS[0], O: AVATARS[1] || AVATARS[0] };
+    const form = document.getElementById("newGameForm");
+
+    function renderPickers() {
+      ["X", "O"].forEach(symbol => {
+        const other = symbol === "X" ? "O" : "X";
+        const container = document.getElementById(`picker${symbol}`);
+        container.innerHTML = "";
+
+        AVATARS.forEach((file, i) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "avatar-option";
+          btn.setAttribute("aria-label", `Avatar ${i + 1}`);
+
+          const isSelected = selected[symbol] === file;
+          const isTaken = selected[other] === file;
+          if (isSelected) btn.classList.add("selected");
+          if (isTaken) btn.classList.add("taken");
+          btn.setAttribute("aria-pressed", String(isSelected));
+          btn.disabled = isTaken;
+
+          btn.appendChild(avatarEl(file, "?"));
+          btn.onclick = () => {
+            selected[symbol] = file;
+            renderPickers();
+          };
+          container.appendChild(btn);
+        });
+      });
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        const game = await request(API, {
+          method: "POST",
+          body: JSON.stringify({
+            playerX: document.getElementById("playerX").value,
+            playerO: document.getElementById("playerO").value,
+            avatarX: selected.X,
+            avatarO: selected.O
+          })
+        });
+        window.location.href = `game.html?id=${game.id}`;
+      } catch (e) {
+        alert(e.message);
+      }
+    });
+
+    renderPickers();
+  </script>
+</body>
+</html>

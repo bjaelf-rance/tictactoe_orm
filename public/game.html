@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tic-Tac-Toe - Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html">New Game</a>
+    <a href="history.html">Game History</a>
+  </nav>
+
+  <main>
+    <div id="scoreboard" class="scoreboard"></div>
+    <h2 id="status" class="status">Loading...</h2>
+    <div id="board" class="board"></div>
+    <div class="actions">
+      <a href="index.html" class="btn">New Game</a>
+      <a href="history.html" class="btn ghost">View History</a>
+    </div>
+  </main>
+
+  <script src="common.js"></script>
+  <script>
+    const gameId = new URLSearchParams(window.location.search).get("id");
+    let current = null;
+
+    const boardEl = document.getElementById("board");
+    const statusEl = document.getElementById("status");
+    const scoreboardEl = document.getElementById("scoreboard");
+
+    function renderGame() {
+      boardEl.innerHTML = "";
+      scoreboardEl.innerHTML = "";
+      statusEl.className = "status";
+
+      // Scoreboard
+      ["X", "O"].forEach(symbol => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        if (!current.winner && current.turn === symbol) chip.classList.add("active");
+        if (current.winner === symbol) chip.classList.add("winner");
+
+        const name = document.createElement("div");
+        name.className = "chip-name";
+        name.textContent = nameOf(current, symbol);
+
+        const role = document.createElement("div");
+        role.className = "chip-role";
+        role.textContent = `Player ${symbol}`;
+
+        const text = document.createElement("div");
+        text.append(name, role);
+
+        chip.append(avatarEl(avatarOf(current, symbol), symbol), text);
+        scoreboardEl.appendChild(chip);
+      });
+
+      // Board
+      const line = current.winner && current.winner !== "Draw" ? winningLine(current.board) : null;
+      [...current.board].forEach((cell, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cell";
+        if (cell !== "-") {
+          btn.classList.add("filled");
+          btn.appendChild(avatarEl(avatarOf(current, cell), cell));
+        }
+        if (line && line.includes(i)) btn.classList.add("win");
+        btn.disabled = cell !== "-" || !!current.winner;
+        btn.setAttribute(
+          "aria-label",
+          cell === "-" ? `Cell ${i + 1}, empty` : `Cell ${i + 1}, ${nameOf(current, cell)}`
+        );
+        btn.onclick = () => makeMove(i);
+        boardEl.appendChild(btn);
+      });
+
+      // Status
+      if (current.winner === "Draw") {
+        statusEl.textContent = "It's a draw!";
+        statusEl.classList.add("done");
+      } else if (current.winner) {
+        statusEl.textContent = `${nameOf(current, current.winner)} wins!`;
+        statusEl.classList.add("done");
+      } else {
+        statusEl.textContent = `${nameOf(current, current.turn)}'s turn`;
+      }
+    }
+
+    async function makeMove(index) {
+      try {
+        current = await request(`${API}/${current.id}/move`, {
+          method: "PUT",
+          body: JSON.stringify({ index })
+        });
+        renderGame();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function loadGame() {
+      try {
+        current = await request(`${API}/${gameId}`);
+        renderGame();
+      } catch (e) {
+        statusEl.textContent = "Game not found. Start a new one!";
+      }
+    }
+
+    loadGame();
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Game {
+  id        Int      @id @default(autoincrement())
+  playerX   String
+  playerO   String
+  avatarX   String   @default("avatar1.jpg")
+  avatarO   String   @default("avatar2.jpg")
+  board     String   @default("---------")
+  turn      String   @default("X")
+  winner    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
