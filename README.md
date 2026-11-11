@@ -1,7 +1,7 @@
 # Tic-Tac-Toe with Prisma ORM and MySQL
 
 ## Purpose
-A tic-tac-toe web game where players choose a pixel avatar and play. Every game is saved to a MySQL database, so game history persists after the server restarts. Players can create games, play and save moves, rename players, view history, and delete games.
+A tic-tac-toe web game where players choose an avatar and play. Every game is saved to a MySQL database, so game history persists after the server restarts. Players can create games, play and save moves, rename players, view history, and delete games.
 
 ## Technologies Used
 - Node.js and Express.js (backend API)
